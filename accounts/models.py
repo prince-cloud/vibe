@@ -40,12 +40,11 @@ class CustomUser(AbstractUser):
         max_length=100,
         blank=True,
     )
-    USERNAME_FIELD = "phone_number"
     REQUIRED_FIELDS = ["password"]
 
 
     def __str__(self) -> str:
-        return self.phone_number
+        return str(f"{self.username} - {self.phone_number}")
 
     def save(self, *args, **kwargs):
         if (
@@ -59,3 +58,14 @@ class CustomUser(AbstractUser):
         if not self.username and self.phone_number:
             self.username = self.phone_number
         super().save(*args, **kwargs)
+
+
+class Profile(models.Model):
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name="profile")
+    profile_picture = models.ImageField(upload_to="user/profile_pictures/", null=True, blank=True)
+    cover_picture = models.ImageField(upload_to="user/cover_picutres/", null=True, blank=True)
+
+    date_created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self) -> str:
+        return str(self.user)
