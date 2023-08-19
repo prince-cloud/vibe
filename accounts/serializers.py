@@ -218,3 +218,22 @@ class EmailEditSerializer(serializers.ModelSerializer):
     def get_verification_token(self, length=4):
         token = "".join([secrets.choice("0123456789") for i in range(length)])
         return token
+
+
+class ProfileImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = ["profile_picture"]
+
+class CoverImageUpageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = ["cover_picture"]
+
+
+class UpdateProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile 
+        fields = ( 
+            "about",
+        )

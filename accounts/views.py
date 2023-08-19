@@ -12,7 +12,8 @@ from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
 from rest_framework_simplejwt.tokens import RefreshToken
 import typing
-
+from rest_framework.generics import UpdateAPIView
+from rest_framework.parsers import MultiPartParser, FormParser
 
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
@@ -24,6 +25,7 @@ def get_tokens_for_user(user):
 
 
 class UserViewSet(ModelViewSet):
+    """ A viewset for users """
     model = CustomUser
     serializer_class = serializers.UserAccountSerializer
     queryset = CustomUser.objects.all()
@@ -89,6 +91,7 @@ class UserViewSet(ModelViewSet):
 
 
 class RegisterViewSet(ModelViewSet):
+    """ A viewset for user account registration """
     model = CustomUser
     serializer_class = serializers.UserRegisterSerializer
     queryset = CustomUser.objects.all()
@@ -114,6 +117,7 @@ class RegisterViewSet(ModelViewSet):
     def perform_create(self, serializer: serializers.UserRegisterSerializer):
         return serializer.create_user()
 
+    """ An Action to acitvate user account after registration """
     @extend_schema(
         request=serializers.UserActivationSerializer,
         responses={"200": serializers.UserAccountSerializer},
@@ -143,6 +147,7 @@ class RegisterViewSet(ModelViewSet):
             )
         return Response(self.get_serializer(instance=user_account).data, HTTPStatus.OK)
 
+    """ An action to resent account activation top  """
     @extend_schema(
         request=serializers.ResendAccountTokenSerializer,
         responses={"200": serializers.ResendAccountTokenSerializer},
@@ -162,3 +167,46 @@ class RegisterViewSet(ModelViewSet):
         serializer.send_token()
 
         return Response(data=serializer.data, status=HTTPStatus.OK)
+
+
+class UpdateProfileView(UpdateAPIView):
+    """ Updating user profile Viewset """
+    serializer_class = serializers.UpdateProfileSerializer
+    http_method_names = [
+        "patch",
+    ]
+    permission_classes = [
+        rest_permissions.IsAuthenticated,
+    ]
+
+    def get_object(self):
+        return self.request.user.profile
+    
+
+class UpdateProfileImageView(UpdateAPIView):
+    """ Update user profile image viewset """
+    serializer_class = serializers.ProfileImageSerializer
+    http_method_names = [
+        "patch",
+    ]
+    parser_classes = (MultiPartParser, FormParser)
+    permission_classes = [
+        rest_permissions.IsAuthenticated,
+    ]
+
+    def get_object(self):
+        return self.request.user.profile
+
+class UpdateCoverImageView(UpdateAPIView):
+    """ Update user cover image viewset """
+    serializer_class = serializers.CoverImageUpageSerializer
+    http_method_names = [
+        "patch",
+    ]
+    parser_classes = (MultiPartParser, FormParser)
+    permission_classes = [
+        rest_permissions.IsAuthenticated,
+    ]
+
+    def get_object(self):
+        return self.request.user.profile
