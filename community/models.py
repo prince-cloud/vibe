@@ -12,21 +12,26 @@ class Group(models.Model):
     def __str__(self) -> str:
         return str(self.name)
     
+    class Meta:
+        ordering = ("-date_created",)
 class Community(models.Model):
     name = models.CharField(max_length=100)
     admin = models.ForeignKey(CustomUser, related_name="admin_communities", on_delete=models.CASCADE)
-    groups = models.ManyToManyField( Group, related_name="communities")
+    groups = models.ManyToManyField(Group, related_name="communities")
     profile_picture = models.ImageField(upload_to='communitu_profile/', null=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self) -> str:
         return str(self.name)
 
+    class Meta:
+        ordering = ("-date_created",)   
+
 class Announcement(models.Model):
     name = models.CharField(max_length=100)
-    coummunity = models.OneToOneField(Community, related_name="announcement", on_delete=models.CASCADE)
+    community = models.OneToOneField(Community, related_name="announcement", on_delete=models.CASCADE)
 
     date_created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self) -> str:
-        return str(self.name)
+        return str(self.community)
