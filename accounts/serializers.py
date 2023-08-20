@@ -237,3 +237,27 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
         fields = ( 
             "about",
         )
+
+
+
+class UserInfoSerializer(serializers.ModelSerializer):
+    fullname = serializers.SerializerMethodField(read_only=True)
+    profile_picture = serializers.SerializerMethodField(read_only=True) 
+
+    def get_fullname(self, instance: CustomUser):
+        return str(f"{instance.user.first_name}  {instance.user.last_name}")
+
+    def get_profile_picture(self, instance: CustomUser):
+        return instance.user.profile.profile_picture
+
+
+    class Meta:
+        model = CustomUser
+        fields = (
+            "id",
+            "fullname",
+            "username",
+            "phone_number",
+            "email",
+            "profile_picture",
+        )
