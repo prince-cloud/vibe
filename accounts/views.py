@@ -14,6 +14,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 import typing
 from rest_framework.generics import UpdateAPIView
 from rest_framework.parsers import MultiPartParser, FormParser
+from django.shortcuts import get_object_or_404
+from rest_framework.exceptions import ValidationError
 
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
@@ -87,7 +89,43 @@ class UserViewSet(ModelViewSet):
     ) -> Response:
         return Response(self.get_serializer(instance=request.user).data, HTTPStatus.OK)
 
+    @action(
+        methods=["post"],
+        detail=True,
+        url_path="follow",
+        url_name="follow",
+        permission_classes=[rest_permissions.IsAuthenticated],
+    )
+    def follow(self, request: HttpRequest, pk):
+        """
+        follow a particular user
+        """
+        user = get_object_or_404(CustomUser, pk=pk)
+        if not UserFollowship.objects.filter(user=user, follower=self.request.user).exists():
+            UserFollowship.objects.create(user=user, follower=self.request.user)
+        follow_obj = UserFollowship.objects.get(user=user, follower=self.request.user)
+        follow_obj.deleted = False
+        follow_obj.save()
+        return Response(data={"success":"You have successfully followed this user."})
     
+    @action(
+        methods=["post"],
+        detail=True,
+        url_path="unfollow",
+        url_name="unfollow",
+        permission_classes=[rest_permissions.IsAuthenticated],
+    )
+    def unfollow(self, request: HttpRequest, pk):
+        """
+        follow a particular user
+        """
+        user = get_object_or_404(CustomUser, pk=pk)
+        if not UserFollowship.objects.filter(user=user, follower=self.request.user).exists():
+            return Response(data={"error":"You are not following this user."})
+        follow_obj = UserFollowship.objects.get(user=user, follower=self.request.user)
+        follow_obj.deleted = True
+        follow_obj.save()
+        return Response(data={"success":"You have successfully unfollowed this user."})
 
 
 class RegisterViewSet(ModelViewSet):
@@ -237,7 +275,7 @@ class UserFollowshipViewset(ModelViewSet):
         """
         Endpoint get all followers
         """
-        followers = UserFollowship.objects.filter(user=self.request.user)
+        followers = UserFollowship.objects.filter(user=self.request.user, deleted=False)
         serializer = serializers.UserFollowshipSerializer(
             instance=followers, many=True, context=self.get_serializer_context()
         )
@@ -252,9 +290,9 @@ class UserFollowshipViewset(ModelViewSet):
     )
     def following(self, request: HttpRequest,):
         """
-        Endpoint get all followers
+        Endpoint to get all users you are following
         """
-        following = UserFollowship.objects.filter(follower=self.request.user)
+        following = UserFollowship.objects.filter(follower=self.request.user, deleted=False)
         serializer = serializers.UserFollowshipSerializer(
             instance=following, many=True, context=self.get_serializer_context()
         )

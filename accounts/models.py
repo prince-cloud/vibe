@@ -80,6 +80,7 @@ class UserFollowship(models.Model):
 
     user = models.ForeignKey(CustomUser, related_name="followers", on_delete=models.SET_NULL, null=True)
     follower = models.ForeignKey(CustomUser, related_name="following", on_delete=models.SET_NULL, null=True)
+    deleted = models.BooleanField(default=False)
 
     date_created = models.DateTimeField(auto_now_add=True)
 

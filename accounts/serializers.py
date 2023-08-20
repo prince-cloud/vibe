@@ -1,5 +1,6 @@
 import secrets
 from typing import Dict
+from django.http import HttpRequest
 from rest_framework import serializers
 from config.sms import send_sms
 from .models import CustomUser, Profile, UserFollowship
@@ -8,7 +9,8 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import validate_phonenumber
 from django.db.models import Q
-
+from django.contrib.sites.models import Site
+from django.conf import settings
 
 class UserAccountSerializer(serializers.ModelSerializer):
 
@@ -240,10 +242,16 @@ class UserInfoSerializer(serializers.ModelSerializer):
     profile_picture = serializers.SerializerMethodField(read_only=True) 
 
     def get_fullname(self, instance: CustomUser):
-        return str(f"{instance.user.first_name}  {instance.user.last_name}")
+        return str(f"{instance.first_name}  {instance.last_name}")
 
     def get_profile_picture(self, instance: CustomUser):
-        return instance.user.profile.profile_picture
+        
+        if not instance.profile.profile_picture:
+            return ''
+        request: HttpRequest = self.context.get('request')
+        if request:
+            return request.build_absolute_uri(instance.profile.profile_picture.url) 
+        return  instance.profile.profile_picture.url
 
 
     class Meta:
@@ -259,8 +267,23 @@ class UserInfoSerializer(serializers.ModelSerializer):
 
 
 class UserFollowshipSerializer(serializers.ModelSerializer):
-    user = UserInfoSerializer(read_only=True) 
-    follower = UserInfoSerializer(read_only=True) 
+    # user_account = serializers.SerializerMethodField()
+    # follower_account = serializers.SerializerMethodField()
+
+    # def get_user_account(self, instance: UserFollowship):
+    #     return UserInfoSerializer(instance=instance.user).data
+    
+
+    # def get_follower_account(self, instance: UserFollowship):s
+    #     return UserInfoSerializer(instance=instance.follower).data
+
+    user = UserInfoSerializer(many=False)
+    follower = UserInfoSerializer(many=False)
+
+    def to_representation(self, instance):
+        print(instance)
+        return super().to_representation(instance)
+
     class Meta:
         model = UserFollowship
         fields = (
