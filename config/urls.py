@@ -17,6 +17,10 @@ urlpatterns = [
         "post/v1/",
         include("post.urls", namespace="post"),
     ),
+    path(
+        "community/v1/",
+        include("community.urls", namespace="community"),
+    ),
     path("", include("pages.urls")),
     # API documentation
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),

@@ -35,7 +35,8 @@ INSTALLED_APPS = [
     # Local
     "accounts",
     "pages",
-    "post"
+    "post",
+    "community"
 ]
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#middleware

@@ -1,6 +1,7 @@
 from django.db import models
 from accounts.models import CustomUser 
 from django.contrib.auth import get_user_model
+from community.models import Group, Announcement
 # Create your models here.
 
 User = get_user_model()
@@ -32,8 +33,15 @@ class Post(models.Model):
     post_type = models.CharField(
         choices=PostType.choices, max_length=50, default=PostType.text_post
     )
-    date_created = models.DateTimeField(auto_now_add=True)
+
+    group = models.ForeignKey(Group, related_name="posts", on_delete=models.SET_NULL, null=True, blank=True)
+    announcement = models.ForeignKey(Announcement, related_name="posts", on_delete=models.CASCADE, null=True, blank=True)
+
     is_edited = models.BooleanField(default=False)
+    is_group_post = models.BooleanField(default=False)
+    is_announcement_post = models.BooleanField(default=False)
+
+    date_created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self) -> str:
         return str(self.text)
