@@ -13,6 +13,7 @@ class GroupSerializer(serializers.ModelSerializer):
             "name",
             "admin",
             "members",
+            "profile_picture",
             "date_created",
         )
 
@@ -43,5 +44,6 @@ class CommunitySerializer(serializers.ModelSerializer):
             "admin",
             "announcement",
             "groups",
+            "profile_picture",
             "date_created",
         )
