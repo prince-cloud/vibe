@@ -1,7 +1,7 @@
-from .models import CustomUser
+from .models import CustomUser, UserFollowship
 
 # Create your views here.
-from rest_framework.viewsets import ModelViewSet, ViewSet
+from rest_framework.viewsets import ModelViewSet
 from rest_framework.request import HttpRequest
 from django.db import transaction
 from rest_framework import permissions as rest_permissions
@@ -210,3 +210,52 @@ class UpdateCoverImageView(UpdateAPIView):
 
     def get_object(self):
         return self.request.user.profile
+
+
+class UserFollowshipViewset(ModelViewSet):
+    model = UserFollowship
+    serializer_class = serializers.UserFollowshipSerializer
+    queryset = UserFollowship.objects.all()
+    permission_classes = [rest_permissions.IsAuthenticated,]
+    http_method_names = ("get",)
+    filterset_fields = ("user",)
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        if not self.request.user.is_authenticated:
+            return queryset.none()
+        return queryset.filter(user=self.request.user)
+
+    @action(
+        methods=["get"],
+        detail=False,
+        url_path="followers",
+        url_name="followers",
+        permission_classes=[rest_permissions.IsAuthenticated],
+    )
+    def followers(self, request: HttpRequest,):
+        """
+        Endpoint get all followers
+        """
+        followers = UserFollowship.objects.filter(user=self.request.user)
+        serializer = serializers.UserFollowshipSerializer(
+            instance=followers, many=True, context=self.get_serializer_context()
+        )
+        return Response(data=serializer.data)
+    
+    @action(
+        methods=["get"],
+        detail=False,
+        url_path="following",
+        url_name="following",
+        permission_classes=[rest_permissions.IsAuthenticated],
+    )
+    def following(self, request: HttpRequest,):
+        """
+        Endpoint get all followers
+        """
+        following = UserFollowship.objects.filter(follower=self.request.user)
+        serializer = serializers.UserFollowshipSerializer(
+            instance=following, many=True, context=self.get_serializer_context()
+        )
+        return Response(data=serializer.data)

@@ -2,16 +2,11 @@ import secrets
 from typing import Dict
 from rest_framework import serializers
 from config.sms import send_sms
-from .models import CustomUser, Profile
-from django.db import transaction
-
+from .models import CustomUser, Profile, UserFollowship
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
-from django.conf import settings
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-
 from .models import validate_phonenumber
-from django.utils import timezone
 from django.db.models import Q
 
 
@@ -260,4 +255,16 @@ class UserInfoSerializer(serializers.ModelSerializer):
             "phone_number",
             "email",
             "profile_picture",
+        )
+
+
+class UserFollowshipSerializer(serializers.ModelSerializer):
+    user = UserInfoSerializer(read_only=True) 
+    follower = UserInfoSerializer(read_only=True) 
+    class Meta:
+        model = UserFollowship
+        fields = (
+            "id",
+            "user",
+            "follower",
         )

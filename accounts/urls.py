@@ -12,6 +12,7 @@ router = DefaultRouter()
 
 router.register("users", views.UserViewSet, basename="users")
 router.register("register", views.RegisterViewSet, basename="register")
+router.register("user-followership", views.UserFollowshipViewset, basename="user-followership")
 
 app_name = "accounts"
 

@@ -59,6 +59,8 @@ class CustomUser(AbstractUser):
             self.username = self.phone_number
         super().save(*args, **kwargs)
 
+    class Meta:
+        ordering = ("-date_joined",)
 
 class Profile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name="profile")
@@ -67,6 +69,22 @@ class Profile(models.Model):
     cover_picture = models.ImageField(upload_to="user/cover_picutres/", null=True, blank=True)
 
     date_created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self) -> str:
+        return str(self.user)
+
+    class Meta:
+        ordering = ("-date_created",)
+
+class UserFollowship(models.Model):
+
+    user = models.ForeignKey(CustomUser, related_name="followers", on_delete=models.SET_NULL, null=True)
+    follower = models.ForeignKey(CustomUser, related_name="following", on_delete=models.SET_NULL, null=True)
+
+    date_created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-date_created",)
 
     def __str__(self) -> str:
         return str(self.user)

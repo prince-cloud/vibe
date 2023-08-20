@@ -118,7 +118,7 @@ class PostComment(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self) -> str:
-        return str(self.post)
+        return str(self.comment)
 
     def likes_count(self):
         return self.likes.count()
