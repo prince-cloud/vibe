@@ -18,6 +18,7 @@ class CustomUserAdmin(UserAdmin):
             "Profile Information",
             {
                 "fields": (   
+                    "privacy",
                     "activation_otp", 
                     "phone_number", 
                 ),
