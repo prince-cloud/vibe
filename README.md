@@ -46,6 +46,8 @@ $ source .venv/bin/activate
 ---
 ```
 #login
+# Login can be done with username, phone_number or email
+# with the password combination.
 /auth/v1/token/
 
 #sign up
