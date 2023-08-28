@@ -41,14 +41,33 @@ $ source .venv/bin/activate
 # Load the Read Docs at http://127.0.0.1:8000/api/schema/redoc/
 ```
 
-## 🤝 Contributing
+## Common endpoints
 
-Contributions, issues and feature requests are welcome! See [CONTRIBUTING.md](https://github.com/wsvincent/djangox/blob/master/CONTRIBUTING.md).
+---
+```
+#login
+/auth/v1/token/
 
-## ⭐️ Support
+#sign up
+/auth/v1/register/
 
-Give a ⭐️  if this project helped you!
+#activate account
+/auth/v1/register/activate/
 
-## License
+#resend OTP
+/auth/v1/register/resend-otp/
+
+#post
+/post/v1/posts/
+
+#community
+/auth/v1/register/resend-otp/
+
+#groups
+/community/v1/groups/
+```
+---
+
+
 
 [The MIT License](LICENSE)
