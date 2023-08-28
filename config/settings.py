@@ -35,6 +35,8 @@ INSTALLED_APPS = [
     # Local
     "accounts",
     "pages",
+    "post",
+    "community"
 ]
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#middleware
@@ -48,6 +50,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "config.middleware.CustomNoCacheMiddleware",
 ]
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#root-urlconf
@@ -167,7 +170,8 @@ ACCOUNT_LOGOUT_REDIRECT_URL = "home"
 # https://django-allauth.readthedocs.io/en/latest/installation.html?highlight=backends
 AUTHENTICATION_BACKENDS = (
     "django.contrib.auth.backends.ModelBackend",
-    "allauth.account.auth_backends.AuthenticationBackend",
+    "accounts.authentication_backend.AuthenticationBackend",
+    # "allauth.account.auth_backends.AuthenticationBackend",
 )
 # https://django-allauth.readthedocs.io/en/latest/configuration.html
 ACCOUNT_SESSION_REMEMBER = True

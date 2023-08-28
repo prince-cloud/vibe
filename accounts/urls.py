@@ -12,6 +12,7 @@ router = DefaultRouter()
 
 router.register("users", views.UserViewSet, basename="users")
 router.register("register", views.RegisterViewSet, basename="register")
+router.register("user-followership", views.UserFollowshipViewset, basename="user-followership")
 
 app_name = "accounts"
 
@@ -20,5 +21,9 @@ urlpatterns = [
     path("token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("token/verify/", TokenVerifyView.as_view(), name="token_verify"),
+    path("update-profile", views.UpdateProfileView.as_view(), name="update-profile"),
+    path("update-cover-image", views.UpdateCoverImageView.as_view(), name="update-cover-image"),
+    path("update-profile-image", views.UpdateProfileImageView.as_view(), name="update-profile-image")
+
 
 ]

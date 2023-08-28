@@ -1,42 +1,66 @@
 import secrets
 from typing import Dict
+from django.http import HttpRequest
 from rest_framework import serializers
 from config.sms import send_sms
-from .models import CustomUser
-from django.db import transaction
-
+from .models import CustomUser, Profile, UserFollowship
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
-from django.conf import settings
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-
 from .models import validate_phonenumber
-from django.utils import timezone
+from django.db.models import Q
+from django.contrib.sites.models import Site
+from django.conf import settings
+from post.models import Post
 
 
 class UserAccountSerializer(serializers.ModelSerializer):
+    total_posts = serializers.SerializerMethodField(read_only=True)
+    total_followers = serializers.SerializerMethodField(read_only=True)
+    total_following = serializers.SerializerMethodField(read_only=True)
 
+
+    def get_total_followers(self, instance: CustomUser):
+        return instance.followers.all().count()
+    
+    def get_total_following(self, instance: CustomUser):
+        return instance.following.all().count()
+    
+    def get_total_posts(self, instance: CustomUser):
+        return Post.objects.filter(user=instance).count()
+    
+    def get_full_name(serlf, instance:CustomUser):
+        return f"{instance.last_name} {instance.first_name}"
+    
     class Meta:
         model = CustomUser
         fields = [
             "id",
-            "phone_number",
-            "email",
             "first_name",
             "last_name",
-            "is_active",
-            "is_staff",
-            "is_superuser",
-            "last_login",
+            "username",
+            "email",
+            "phone_number",
+            "total_posts",
+            "total_followers",
+            "total_following",
+            "profile",
             "date_joined",
         ]
+        depth = 1
+        read_only_fields = ("profile",)
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer, UserAccountSerializer):
+    """
+    An endpoint for login
+    """
     def validate(self, attrs):
+        username = attrs.get("username")
         phone_number = attrs.get("phone_number")
         password = attrs.get("password")
-        user_account_qs = CustomUser.objects.filter(phone_number=phone_number)
+        email = attrs.get("email")
+        user_account_qs = CustomUser.objects.filter(Q(phone_number=phone_number) | Q(username=username) | Q(email=email))
         if user_account_qs.exists():
             user_account: CustomUser = user_account_qs.first()
             if (not user_account.is_active) and user_account.check_password(password):
@@ -51,14 +75,16 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer, UserAccountSerializ
     class Meta(UserAccountSerializer.Meta):
         read_only_fields = (
             "id",
+            "username",
+            "phone_number",
+            "profile",
+            "email",
             "first_name",
+            "last_name",
             "is_active",
             "is_staff",
             "is_superuser",
-            "is_online",
             "last_login",
-            "last_name",
-            "phone_number",
             "date_joined",
         )
 
@@ -73,6 +99,7 @@ class UserAccountSerializerWithToken(serializers.ModelSerializer):
             "id",
             "access",
             "refresh",
+            "username",
             "phone_number",
             "email",
             "first_name",
@@ -89,20 +116,23 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = (
+            "username",
+            "phone_number",
             "first_name",
             "last_name",
-            "phone_number",
             "password",
         )
 
     def validate(self, attrs):
+        print("=== validating function ")
+        username = attrs["username"]
         phone_number = attrs["phone_number"]
         first_name = attrs["first_name"]
         last_name = attrs["last_name"]
-        if not(first_name or last_name):
+        if CustomUser.objects.filter(username=username).exists():
             raise ValidationError(
                 _(
-                    "At leaset first name or last name is required.",
+                    "User with the this username exist. Please use a username"
                 )
             )
         if CustomUser.objects.filter(phone_number=phone_number).exists():
@@ -111,12 +141,20 @@ class UserRegisterSerializer(serializers.ModelSerializer):
                     "User with the this phone number already exists. Please use a different phone number."
                 )
             )
+        if not(first_name or last_name):
+            raise ValidationError(
+                _(
+                    "At leaset first name or last name is required.",
+                )
+            )
+
         return super().validate(attrs)
 
     def create_user(self, **kwargs):
         user: CustomUser = self.save(is_active=False, **kwargs)
         user.set_password(self.validated_data["password"])
         user.save()
+        Profile.objects.create(user=user)
         send_sms(
             message=f"Your VIBE account activation token is {user.activation_otp}.\nPlease do not share this token with any third party.",
             recipients=[user.phone_number],
@@ -202,3 +240,125 @@ class EmailEditSerializer(serializers.ModelSerializer):
     def get_verification_token(self, length=4):
         token = "".join([secrets.choice("0123456789") for i in range(length)])
         return token
+
+
+class ProfileImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = ["profile_picture"]
+
+class CoverImageUpageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = ["cover_picture"]
+
+
+class UpdateProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile 
+        fields = ( 
+            "about",
+        )
+
+
+
+class UserInfoSerializer(serializers.ModelSerializer):
+    fullname = serializers.SerializerMethodField(read_only=True)
+    profile_picture = serializers.SerializerMethodField(read_only=True) 
+
+    def get_fullname(self, instance: CustomUser):
+        return str(f"{instance.first_name}  {instance.last_name}")
+
+    def get_profile_picture(self, instance: CustomUser):
+        
+        if not instance.profile.profile_picture:
+            return ''
+        request: HttpRequest = self.context.get('request')
+        if request:
+            return request.build_absolute_uri(instance.profile.profile_picture.url) 
+        return  instance.profile.profile_picture.url
+
+
+    class Meta:
+        model = CustomUser
+        fields = (
+            "id",
+            "fullname",
+            "username",
+            "phone_number",
+            "email",
+            "profile_picture",
+        )
+
+
+class UserFollowshipSerializer(serializers.ModelSerializer):
+    # user_account = serializers.SerializerMethodField()
+    # follower_account = serializers.SerializerMethodField()
+
+    # def get_user_account(self, instance: UserFollowship):
+    #     return UserInfoSerializer(instance=instance.user).data
+    
+
+    # def get_follower_account(self, instance: UserFollowship):s
+    #     return UserInfoSerializer(instance=instance.follower).data
+
+    user = UserInfoSerializer(many=False)
+    follower = UserInfoSerializer(many=False)
+
+    def to_representation(self, instance):
+        print(instance)
+        return super().to_representation(instance)
+
+    class Meta:
+        model = UserFollowship
+        fields = (
+            "id",
+            "user",
+            "follower",
+        )
+
+class ProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = (
+            "id",
+            "about",
+            "profile_picture",
+            "cover_picture",
+            
+        )
+    
+
+class UserFullProfileSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField(read_only=True)
+    total_posts = serializers.SerializerMethodField(read_only=True)
+    total_followers = serializers.SerializerMethodField(read_only=True)
+    total_following = serializers.SerializerMethodField(read_only=True)
+
+    profile = ProfileSerializer(read_only=True, many=False)
+
+    def get_total_followers(self, instance: CustomUser):
+        return instance.followers.all().count()
+    
+    def get_total_following(self, instance: CustomUser):
+        return instance.following.all().count()
+    
+    def get_total_posts(self, instance: CustomUser):
+        return Post.objects.filter(user=instance).count()
+    
+    def get_full_name(serlf, instance:CustomUser):
+        return f"{instance.last_name} {instance.first_name}"
+    
+    class Meta:
+        model = CustomUser
+        fields = (
+            "id",
+            "username",
+            "email",
+            "full_name",
+            "total_posts",
+            "total_followers",
+            "total_following",
+            "profile",
+
+        )
