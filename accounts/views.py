@@ -172,7 +172,7 @@ class RegisterViewSet(ModelViewSet):
     an ```otp code``` will be sent to the phone number provided.
     use the ```account activation endpiont``` to activate your account after a successful registration.
 
-    it required internet access to send otp, make user to signup when connected to the internet. 
+    it requires an internet access to send otp, make sure to signup when connected to the internet. 
     """
     model = CustomUser
     serializer_class = serializers.UserRegisterSerializer
@@ -247,7 +247,7 @@ class RegisterViewSet(ModelViewSet):
     )
     def resend_otp(self, request, **kwargs):
         """
-        This endpoint allows you to reset your account activation ```otp```.
+        This endpoint allows you to resend your account activation ```otp```.
         """
         serializer = serializers.ResendAccountTokenSerializer(
             data=request.data, context=self.get_serializer_context()

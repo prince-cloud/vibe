@@ -31,6 +31,10 @@ logger = logging.getLogger(__name__)
 
 
 class GroupViewSet(ModelViewSet):
+    """
+    Groups views, this allows uses to join and leave groups.
+    add multiple uses to groups you have created. 
+    """
     model = Group
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
@@ -65,7 +69,8 @@ class GroupViewSet(ModelViewSet):
     )
     def join(self, request: HttpRequest, pk):
         """
-        Endpoint to join a group.
+        to ```join``` a group the id is required, parse the in the integer value field.
+        Authentication is required to perform this action.
         """
         group = get_object_or_404(Group, pk=pk)
         group.members.add(self.request.user)
@@ -84,7 +89,8 @@ class GroupViewSet(ModelViewSet):
     )
     def leave_group(self, request: HttpRequest, pk):
         """
-        Endpoint to join a group.
+        to ```leave``` a group the id is required, parse the in the integer value field.
+        Authentication is required to perform this action.
         """
         group = get_object_or_404(Group, pk=pk)
         group.members.remove(self.request.user)
@@ -109,7 +115,9 @@ class GroupViewSet(ModelViewSet):
     )
     def add_members(self, request: HttpRequest, pk):
         """
-        Endpoint to add a member to a group
+        add ```multiple members``` to group you have created at a time.
+        the ```id's``` of the users are required and the ```id``` of the group you created is required.
+        if you are not an ```admin``` of the group you are trying to add member, you will get validation error.
         """
         group = get_object_or_404(Group, pk=pk)
         if group.admin != request.user:
@@ -139,7 +147,9 @@ class GroupViewSet(ModelViewSet):
     )
     def remove_members(self, request: HttpRequest, pk):
         """
-        Endpoint to add a member to a group
+        remove ```multiple members``` from group you have created at a time.
+        the ```id's``` of the users are required and the ```id``` of the group you created is required.
+        if you are not an ```admin``` of the group you are trying to remove member from, you will get validation error.
         """
         group = get_object_or_404(Group, pk=pk)
         if group.admin != request.user:
@@ -165,7 +175,7 @@ class GroupViewSet(ModelViewSet):
     )
     def get_members(self, request: HttpRequest, pk):
         """
-        Endpoint to get all group members
+        this endpoint allows us to see all members of a particular group.
         """
         group = get_object_or_404(Group, pk=pk)
         users = CustomUser.objects.filter(id__in=[group.members.values_list("id", flat=True)])
@@ -214,7 +224,9 @@ class CommunityViewSet(ModelViewSet):
     )
     def add_groups(self, request: HttpRequest, pk):
         """
-        Endpoint to add a member to a group
+        add ```multiple groups``` to community you have created at a time.
+        the ```id's``` of the groups are required and the ```id``` of the community you created is required.
+        if you are not an ```admin``` of the community you are trying to add groups, you will get validation error.
         """
         community = get_object_or_404(Community, pk=pk)
         if community.admin != request.user:
@@ -246,7 +258,9 @@ class CommunityViewSet(ModelViewSet):
     )
     def remove_groups(self, request: HttpRequest, pk):
         """
-        Endpoint to add a member to a group
+        remove ```multiple groups``` from community you have created at a time.
+        the ```id's``` of the groups are required and the ```id``` of the community you created is required.
+        if you are not an ```admin``` of the community you cannot remove groups.
         """
         community = get_object_or_404(Community, pk=pk)
         if community.admin != request.user:
@@ -274,7 +288,7 @@ class CommunityViewSet(ModelViewSet):
     )
     def get_groups(self, request: HttpRequest, pk):
         """
-        Endpoint to get all group members
+        this endpoint allows you to see all groups in a community.
         """
         community = get_object_or_404(Community, pk=pk)
         groups = Group.objects.filter(id__in=[community.groups.values_list("id", flat=True)])

@@ -155,6 +155,8 @@ class PostCreateSerializer(serializers.ModelSerializer):
             "post_type",
             "pictures",
             "videos",
+            "group",
+            "announcement",
         )
 
         read_only_fields = ( "user", "date_created", "pictures", "videos")

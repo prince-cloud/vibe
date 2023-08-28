@@ -37,6 +37,10 @@ logger = logging.getLogger(__name__)
 
 
 class PostFilter(djangofilters.FilterSet):
+    """
+    This filter section to filter post based on ```year```, ```month``` and or ```day```
+    in which the post was created.
+    """
     year = djangofilters.NumberFilter(field_name="published_at__year")
     month = djangofilters.NumberFilter(field_name="published_at__month")
     day = djangofilters.NumberFilter(field_name="published_at__day")
@@ -47,10 +51,15 @@ class PostFilter(djangofilters.FilterSet):
             "user",
             "shared_by",
             "post_type",
+            "group",
+            "announcement" 
         )
 
 
 class PostVideoViewset(ModelViewSet):
+    """
+    This view stores all videos that associated with a posts.
+    """
     parser_classes = (MultiPartParser, FormParser)
     queryset = PostVideo.objects.all()
     serializer_class = PostVideoSerializer
@@ -79,6 +88,9 @@ class PostVideoViewset(ModelViewSet):
         parser_classes=(JSONParser,),
     )
     def delete(self, request):
+        """
+        to delete multiple vidoes, parse the ```id's``` of videos as a list.
+        """
         ids = request.data.get("ids", [])
         PostVideo.objects.filter(
             id__in=ids, post__user=request.user
@@ -91,12 +103,24 @@ class PostVideoViewset(ModelViewSet):
 
 class PostViewSet(ModelViewSet):
     """
-    Post serializer ViewSet
+    Post ViewSet
 
-    Post upload required either 'picture', 'text-only' or 'text-with-picture'
-    a post can have multiple images
+    Post upload requires either ```picture```, ```text-only```, ```text-with-video``` or ```text-with-picture```
+    a post can have multiple ```pictures``` or ```videos```
+
+    Post have types ```TextPost```, ```VisualPost```, ```VideoPost```
+
+    ```TextPost``` means the post has onnly text with ```NO``` media.
+    ```VisualPost``` means the post has text or no text with images
+    ```VideoPost``` means the post has a video with or without a text.
+
+    A post can belong to a ```group``` or an ```announcement``` page. parse the ```id`` of the group if the post is
+    a group post and the id of the ```annoucement``` if the post is an announcement post.
+
+    To add ```videos``` to a post, add the video paramenter as ```{videos: [0] }```, which takes list of ```ids``` to the video you are attaching.
+
     To enable multiple pictures uploads, during post and patch requests, use
-    `multipart/form-data` as `content-type`
+    ```multipart/form-data``` as ````content-type````
     """
 
     queryset = Post.objects.all()
@@ -118,6 +142,7 @@ class PostViewSet(ModelViewSet):
         return super().get_serializer_class()
 
     def get_queryset(self) -> QuerySet[Post]:
+        """ some comments here """
         if not self.request.user.is_authenticated:
             return self.queryset.none()
         return self.queryset
@@ -127,7 +152,6 @@ class PostViewSet(ModelViewSet):
         Creating a Post
         """
         request: HttpRequest = self.request
-
         
         post = serializer.save(user=self.request.user, pictures=[],)
         for formfile in request.FILES.getlist("pictures"):
@@ -160,7 +184,10 @@ class PostViewSet(ModelViewSet):
     )
     def like(self, request: HttpRequest, pk):
         """
-        Endpoint to like a post
+        ```Liking``` a post
+
+        Post the ```id``` is required to to like a post, 
+        parse the id of the post to like in the interger field.
         """
         post = get_object_or_404(Post, pk=pk)
         post.likes.add(self.request.user)
@@ -180,7 +207,10 @@ class PostViewSet(ModelViewSet):
     )
     def unlike(self, request: HttpRequest, pk):
         """
-        Endpoint to unlike a post
+        ```Unliking``` a post
+
+        Post the ```id``` is required to to unlike a post, 
+        parse the id of the post to like in the interger field.
         """
         post = get_object_or_404(Post, pk=pk)
         post.likes.remove(self.request.user) 
@@ -199,7 +229,11 @@ class PostViewSet(ModelViewSet):
     )
     def share_post(self, request: HttpRequest, pk):
         """
-        End point to share Post.
+        ```Sharing or Reposting``` a post
+
+        it takes the same proces of creating a post, but this time,
+        make reference to the post you are sharing from. parse the ```id``` of the original post
+        in the ```shared_from``` parameter field.
         """
         original_post = get_object_or_404(Post, pk=pk)
         serializer = PostCreateSerializer(data=request.data)
@@ -219,7 +253,10 @@ class PostViewSet(ModelViewSet):
     )
     def video(self, request: HttpRequest):
         """
-        get rendom post videos
+        ```Random Video Post```
+
+        this endpoint returns random videos from video posts.
+        
         """
         videos = Post.objects.filter(
             post_type=Post.PostType.post_video,
@@ -311,18 +348,13 @@ class PostCommentViewSet(ModelViewSet):
         queryset = super().get_queryset()
         if not self.request.user.is_authenticated:
             return queryset.none()
-        blocked_users_query = Q(
-            user__user_info__blocked_users__user_blocked=self.request.user
-        ) | Q(user__user_info__user_blocked__user=self.request.user)
+        
         if not self.request.user.is_superuser:
-            queryset = (
-                queryset.exclude(blocked_users_query)
-                .filter(
+            queryset = queryset.filter(
                     Q(user=self.request.user)
                     | ~Q(hidden_from__id=self.request.user.id)
-                )
-                .distinct()
-            )
+                ).distinct()
+            
         return queryset
 
     def perform_create(self, serializer: PostCommentSerializer):
