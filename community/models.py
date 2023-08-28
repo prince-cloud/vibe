@@ -17,7 +17,7 @@ class Group(models.Model):
 class Community(models.Model):
     name = models.CharField(max_length=100)
     admin = models.ForeignKey(CustomUser, related_name="admin_communities", on_delete=models.CASCADE)
-    groups = models.ManyToManyField(Group, related_name="communities")
+    groups = models.ManyToManyField(Group, related_name="community")
     profile_picture = models.ImageField(upload_to='communitu_profile/', null=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
 

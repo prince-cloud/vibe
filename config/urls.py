@@ -21,12 +21,12 @@ urlpatterns = [
         "community/v1/",
         include("community.urls", namespace="community"),
     ),
-    path("", include("pages.urls")),
+    path("pages/", include("pages.urls")),
     # API documentation
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     # Optional UI:
     path(
-        "api/swagger/",
+        "",
         SpectacularSwaggerView.as_view(url_name="schema"),
         name="swagger",
     ),

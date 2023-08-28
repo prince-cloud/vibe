@@ -11,6 +11,8 @@ from .models import validate_phonenumber
 from django.db.models import Q
 from django.contrib.sites.models import Site
 from django.conf import settings
+from post.models import Post
+
 
 class UserAccountSerializer(serializers.ModelSerializer):
 
@@ -18,17 +20,16 @@ class UserAccountSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = [
             "id",
-            "username",
-            "phone_number",
-            "email",
             "first_name",
             "last_name",
-            "is_active",
-            "is_staff",
-            "is_superuser",
-            "last_login",
+            "username",
+            "email",
+            "phone_number",
+            "profile",
             "date_joined",
         ]
+        depth = 1
+        read_only_fields = ("profile",)
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer, UserAccountSerializer):
@@ -54,6 +55,7 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer, UserAccountSerializ
             "id",
             "username",
             "phone_number",
+            "profile",
             "email",
             "first_name",
             "last_name",
@@ -100,6 +102,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, attrs):
+        print("=== validating function ")
         username = attrs["username"]
         phone_number = attrs["phone_number"]
         first_name = attrs["first_name"]
@@ -290,4 +293,50 @@ class UserFollowshipSerializer(serializers.ModelSerializer):
             "id",
             "user",
             "follower",
+        )
+
+class ProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = (
+            "id",
+            "about",
+            "profile_picture",
+            "cover_picture",
+            
+        )
+    
+
+class UserFullProfileSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField(read_only=True)
+    total_posts = serializers.SerializerMethodField(read_only=True)
+    total_followers = serializers.SerializerMethodField(read_only=True)
+    total_following = serializers.SerializerMethodField(read_only=True)
+
+    profile = ProfileSerializer(read_only=True, many=False)
+
+    def get_total_followers(self, instance: CustomUser):
+        return instance.followers.all().count()
+    
+    def get_total_following(self, instance: CustomUser):
+        return instance.following.all().count()
+    
+    def get_total_posts(self, instance: CustomUser):
+        return Post.objects.filter(user=instance).count()
+    
+    def get_full_name(serlf, instance:CustomUser):
+        return f"{instance.last_name} {instance.first_name}"
+    
+    class Meta:
+        model = CustomUser
+        fields = (
+            "id",
+            "username",
+            "email",
+            "full_name",
+            "total_posts",
+            "total_followers",
+            "total_following",
+            "profile",
+
         )

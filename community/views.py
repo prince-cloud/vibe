@@ -24,6 +24,8 @@ from drf_spectacular.utils import extend_schema
 from accounts.models import CustomUser
 from accounts.serializers import UserInfoSerializer
 from rest_framework.exceptions import ValidationError
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +35,8 @@ class GroupViewSet(ModelViewSet):
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
     permission_classes = [rest_permissions.IsAuthenticated,]
+    search_fields = ["name"]
+    filter_backends = (filters.SearchFilter, DjangoFilterBackend)
 
     def get_serializer_class(self) -> GroupCreateSerializer | GroupSerializer:
         if not self.request.method == "GET":
@@ -44,7 +48,7 @@ class GroupViewSet(ModelViewSet):
         if not self.request.user.is_authenticated:
             return queryset.none()
         if not self.request.user.is_superuser:
-            return queryset.filter(Q(admin=self.request.user) | Q(members__in = self.request.user))
+            return queryset.filter(Q(admin=self.request.user) | Q(members = self.request.user)).distinct()
         return queryset
 
     def perform_create(self, serializer):
@@ -187,7 +191,8 @@ class CommunityViewSet(ModelViewSet):
         if not self.request.user.is_authenticated:
             return queryset.none()
         if not self.request.user.is_superuser:
-            return queryset.filter(Q(admin=self.request.user) | Q(groups__in = self.request.user.group.communities))
+            return queryset.filter(Q(admin=self.request.user) | Q(groups__id__in = self.request.user.group.all())).distinct()
+        
         return queryset
 
     def perform_create(self, serializer):

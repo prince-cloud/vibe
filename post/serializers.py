@@ -69,7 +69,7 @@ class PostSerializer(serializers.ModelSerializer):
 
     liked = serializers.SerializerMethodField()
 
-    user_account = UserInfoSerializer(read_only=True) 
+    user_account = UserInfoSerializer() 
 
     shared_from = serializers.SerializerMethodField(read_only=True)
 
@@ -116,6 +116,7 @@ class PostSerializer(serializers.ModelSerializer):
         )
 
         read_only_fields = (
+            "user_account",
             "date_created",
             "pictures",
             "videos"

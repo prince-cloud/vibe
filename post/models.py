@@ -54,6 +54,9 @@ class Post(models.Model):
 
     def shares_count(self):
         return self.shared_by.all().count()
+    
+    def user_account(self):
+        return self.user
 
     class Meta:
         ordering = ("-date_created",)

@@ -15,7 +15,9 @@ import typing
 from rest_framework.generics import UpdateAPIView
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.shortcuts import get_object_or_404
-from rest_framework.exceptions import ValidationError
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters
+
 
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
@@ -32,7 +34,8 @@ class UserViewSet(ModelViewSet):
     serializer_class = serializers.UserAccountSerializer
     queryset = CustomUser.objects.all()
     permission_classes = (rest_permissions.IsAuthenticatedOrReadOnly,)
-
+    search_fields = ["first_name", "last_name", "email", "username"]
+    filter_backends = (filters.SearchFilter, DjangoFilterBackend)
     http_method_names = ["get", "patch", "post"]
 
     def perform_create(self, serializer: serializers.UserAccountSerializer):
@@ -127,6 +130,25 @@ class UserViewSet(ModelViewSet):
         follow_obj.save()
         return Response(data={"success":"You have successfully unfollowed this user."})
 
+    @extend_schema(
+        request=serializers.UserFullProfileSerializer,
+        responses={"200": serializers.UserFullProfileSerializer},
+    )
+    @action(
+        methods=["get"],
+        detail=False,
+        url_name="profile",
+        url_path="profile",
+        permission_classes=[
+            rest_permissions.IsAuthenticated,
+        ],  
+    )
+    def profile(self, request: HttpRequest):
+        user: CustomUser = get_object_or_404(CustomUser, id=request.user.id)
+        serializer = serializers.UserFullProfileSerializer(
+            instance=user, many=False, context=self.get_serializer_context()
+        ).data
+        return Response(data=serializer)
 
 class RegisterViewSet(ModelViewSet):
     """ A viewset for user account registration """
@@ -203,7 +225,6 @@ class RegisterViewSet(ModelViewSet):
         )
         serializer.is_valid(raise_exception=True)
         serializer.send_token()
-
         return Response(data=serializer.data, status=HTTPStatus.OK)
 
 
@@ -297,3 +318,6 @@ class UserFollowshipViewset(ModelViewSet):
             instance=following, many=True, context=self.get_serializer_context()
         )
         return Response(data=serializer.data)
+
+
+# class UserProfileSerializer(serializers.Moodel)

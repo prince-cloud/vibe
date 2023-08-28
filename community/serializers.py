@@ -5,8 +5,14 @@ from .models import (
     Group,
     Community,
 )
+from accounts.models import CustomUser
 
 class GroupSerializer(serializers.ModelSerializer):
+    total_members = serializers.SerializerMethodField()
+
+    def get_total_members(self, instance: Group):
+        return instance.members.count()
+    
     class Meta:
         model = Group
         fields = (
@@ -14,6 +20,7 @@ class GroupSerializer(serializers.ModelSerializer):
             "name",
             "admin",
             "members",
+            "total_members",
             "profile_picture",
             "date_created",
         )
@@ -37,6 +44,15 @@ class AddGroupMemberSerializer(serializers.ModelSerializer):
 
 
 class CommunitySerializer(serializers.ModelSerializer):
+    total_groups = serializers.SerializerMethodField()
+    total_members = serializers.SerializerMethodField()
+
+    def get_total_groups(self, instance: Community):
+        return instance.groups.count()
+    
+    def get_total_members(self, instance: Community):
+        return CustomUser.objects.filter(group__community=instance).count()
+    
     class Meta:
         model = Community
         fields = (
@@ -45,6 +61,8 @@ class CommunitySerializer(serializers.ModelSerializer):
             "admin",
             "announcement",
             "groups",
+            "total_groups",
+            "total_members",
             "profile_picture",
             "date_created",
         )
@@ -76,13 +94,3 @@ class AddCommunityGroupSerializer(serializers.ModelSerializer):
         fields = (
             "groups",
         )
-
-    def validate(self, attrs):
-        request: HttpRequest = self.context.get("request")
-        groups = attrs.get("groups")
-        for group in groups: 
-            if group.admin != request.user:
-                raise serializers.ValidationError(
-                        _("You are not an admin of 1 or more groups you have added")
-                    )
-        return super().validate(attrs)
