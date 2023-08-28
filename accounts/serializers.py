@@ -15,7 +15,23 @@ from post.models import Post
 
 
 class UserAccountSerializer(serializers.ModelSerializer):
+    total_posts = serializers.SerializerMethodField(read_only=True)
+    total_followers = serializers.SerializerMethodField(read_only=True)
+    total_following = serializers.SerializerMethodField(read_only=True)
 
+
+    def get_total_followers(self, instance: CustomUser):
+        return instance.followers.all().count()
+    
+    def get_total_following(self, instance: CustomUser):
+        return instance.following.all().count()
+    
+    def get_total_posts(self, instance: CustomUser):
+        return Post.objects.filter(user=instance).count()
+    
+    def get_full_name(serlf, instance:CustomUser):
+        return f"{instance.last_name} {instance.first_name}"
+    
     class Meta:
         model = CustomUser
         fields = [
@@ -25,6 +41,9 @@ class UserAccountSerializer(serializers.ModelSerializer):
             "username",
             "email",
             "phone_number",
+            "total_posts",
+            "total_followers",
+            "total_following",
             "profile",
             "date_joined",
         ]
@@ -33,6 +52,9 @@ class UserAccountSerializer(serializers.ModelSerializer):
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer, UserAccountSerializer):
+    """
+    An endpoint for login
+    """
     def validate(self, attrs):
         username = attrs.get("username")
         phone_number = attrs.get("phone_number")

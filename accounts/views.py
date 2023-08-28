@@ -29,7 +29,10 @@ def get_tokens_for_user(user):
 
 
 class UserViewSet(ModelViewSet):
-    """ A viewset for users """
+    """ 
+    Userviewset, allowed request: get, post and patch
+    this endpoint allows you get all users.
+    """
     model = CustomUser
     serializer_class = serializers.UserAccountSerializer
     queryset = CustomUser.objects.all()
@@ -59,6 +62,10 @@ class UserViewSet(ModelViewSet):
         serializer_class=serializers.EmailEditSerializer,
     )
     def update_email(self, request: HttpRequest):
+        """
+        A view to update user's emaill, authentication is required.
+        this views uses current logged in user to perform is this action. 
+        """
         user: CustomUser = request.user
         serializer = serializers.EmailEditSerializer(
             data=request.data, instance=user, context=self.get_serializer_context()
@@ -101,7 +108,9 @@ class UserViewSet(ModelViewSet):
     )
     def follow(self, request: HttpRequest, pk):
         """
-        follow a particular user
+        To follow a user, parse the user ```id``` in the unique integer field.
+        if the user exits, the resonse will be "you have successfully followed this user"
+        it will return detail not found.
         """
         user = get_object_or_404(CustomUser, pk=pk)
         if not UserFollowship.objects.filter(user=user, follower=self.request.user).exists():
@@ -120,7 +129,9 @@ class UserViewSet(ModelViewSet):
     )
     def unfollow(self, request: HttpRequest, pk):
         """
-        follow a particular user
+        To follow a user, parse the user ```id``` in the unique integer field.
+        if the user exits, the resonse will be "you have successfully followed this user"
+        it will return detail not found.
         """
         user = get_object_or_404(CustomUser, pk=pk)
         if not UserFollowship.objects.filter(user=user, follower=self.request.user).exists():
@@ -144,6 +155,10 @@ class UserViewSet(ModelViewSet):
         ],  
     )
     def profile(self, request: HttpRequest):
+        """
+        thie endpoint returns profile of a user, authentications is required,
+        it uses current logged in user and fetches the profile information 
+        """
         user: CustomUser = get_object_or_404(CustomUser, id=request.user.id)
         serializer = serializers.UserFullProfileSerializer(
             instance=user, many=False, context=self.get_serializer_context()
@@ -151,7 +166,14 @@ class UserViewSet(ModelViewSet):
         return Response(data=serializer)
 
 class RegisterViewSet(ModelViewSet):
-    """ A viewset for user account registration """
+    """ 
+    A viewset for user account registration.
+    the ```username```, ```phone_number``` and ```password``` are all required fields.
+    an ```otp code``` will be sent to the phone number provided.
+    use the ```account activation endpiont``` to activate your account after a successful registration.
+
+    it required internet access to send otp, make user to signup when connected to the internet. 
+    """
     model = CustomUser
     serializer_class = serializers.UserRegisterSerializer
     queryset = CustomUser.objects.all()
@@ -177,7 +199,7 @@ class RegisterViewSet(ModelViewSet):
     def perform_create(self, serializer: serializers.UserRegisterSerializer):
         return serializer.create_user()
 
-    """ An Action to acitvate user account after registration """
+    
     @extend_schema(
         request=serializers.UserActivationSerializer,
         responses={"200": serializers.UserAccountSerializer},
@@ -193,6 +215,10 @@ class RegisterViewSet(ModelViewSet):
         self,
         request: HttpRequest,
     ) -> Response:
+        """ 
+        Activate your account with the ```phone_number``` provided at the 
+        registration and the ```otp code``` sent to the same phone number.
+        """
         serializer = serializers.UserActivationSerializer(
             data=request.data, context=self.get_serializer_context()
         )
@@ -220,6 +246,9 @@ class RegisterViewSet(ModelViewSet):
         serializer_class=serializers.UserAccountSerializer,
     )
     def resend_otp(self, request, **kwargs):
+        """
+        This endpoint allows you to reset your account activation ```otp```.
+        """
         serializer = serializers.ResendAccountTokenSerializer(
             data=request.data, context=self.get_serializer_context()
         )
@@ -229,7 +258,10 @@ class RegisterViewSet(ModelViewSet):
 
 
 class UpdateProfileView(UpdateAPIView):
-    """ Updating user profile Viewset """
+    """ 
+    To update user's profile information such the ```about``` 
+    user need to be authentication perform such action.
+    """
     serializer_class = serializers.UpdateProfileSerializer
     http_method_names = [
         "patch",
@@ -243,7 +275,10 @@ class UpdateProfileView(UpdateAPIView):
     
 
 class UpdateProfileImageView(UpdateAPIView):
-    """ Update user profile image viewset """
+    """ 
+    To update user's profile information such the ```profile image``` 
+    user need to be authentication perform such action.
+    """
     serializer_class = serializers.ProfileImageSerializer
     http_method_names = [
         "patch",
@@ -257,7 +292,10 @@ class UpdateProfileImageView(UpdateAPIView):
         return self.request.user.profile
 
 class UpdateCoverImageView(UpdateAPIView):
-    """ Update user cover image viewset """
+    """ 
+    To update user's profile information such the ```cover image``` 
+    user need to be authentication perform such action.
+    """
     serializer_class = serializers.CoverImageUpageSerializer
     http_method_names = [
         "patch",
@@ -272,6 +310,10 @@ class UpdateCoverImageView(UpdateAPIView):
 
 
 class UserFollowshipViewset(ModelViewSet):
+    """
+    This view allows to see all users you are ```following``` or 
+    users who ```follows```. authentication is required.
+    """
     model = UserFollowship
     serializer_class = serializers.UserFollowshipSerializer
     queryset = UserFollowship.objects.all()
@@ -294,7 +336,8 @@ class UserFollowshipViewset(ModelViewSet):
     )
     def followers(self, request: HttpRequest,):
         """
-        Endpoint get all followers
+        This endpoint gets you all of your ```followers```.
+        Authententication is required to perform such action.
         """
         followers = UserFollowship.objects.filter(user=self.request.user, deleted=False)
         serializer = serializers.UserFollowshipSerializer(
@@ -311,7 +354,8 @@ class UserFollowshipViewset(ModelViewSet):
     )
     def following(self, request: HttpRequest,):
         """
-        Endpoint to get all users you are following
+        This endpoint gets you users you are```following```.
+        Authententication is required to perform such action.
         """
         following = UserFollowship.objects.filter(follower=self.request.user, deleted=False)
         serializer = serializers.UserFollowshipSerializer(
@@ -319,5 +363,3 @@ class UserFollowshipViewset(ModelViewSet):
         )
         return Response(data=serializer.data)
 
-
-# class UserProfileSerializer(serializers.Moodel)
