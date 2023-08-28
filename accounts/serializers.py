@@ -19,6 +19,23 @@ class UserAccountSerializer(serializers.ModelSerializer):
     total_followers = serializers.SerializerMethodField(read_only=True)
     total_following = serializers.SerializerMethodField(read_only=True)
 
+    def to_representation(self, instance: CustomUser):
+        data = super().to_representation(instance)
+        instance.refresh_from_db()
+        request: HttpRequest = self.context.get("request")
+
+        if request != None:
+            if (
+                instance.privacy == instance.UserPrivacy.private
+                and request.user != instance
+                and not request.user.is_superuser
+            ):
+                data.pop("first_name")
+                data.pop("last_name")
+                data.pop("email")
+                data.pop("phone_number")
+                data.pop("total_following")
+        return data
 
     def get_total_followers(self, instance: CustomUser):
         return instance.followers.all().count()
@@ -336,6 +353,23 @@ class UserFullProfileSerializer(serializers.ModelSerializer):
     total_following = serializers.SerializerMethodField(read_only=True)
 
     profile = ProfileSerializer(read_only=True, many=False)
+    
+    def to_representation(self, instance: CustomUser):
+        data = super().to_representation(instance)
+        instance.refresh_from_db()
+        request: HttpRequest = self.context.get("request")
+
+        if request != None:
+            if (
+                instance.privacy == instance.UserPrivacy.private
+                and request.user != instance
+                and not request.user.is_superuser
+            ):
+                data.pop("full_name")
+                data.pop("username")
+                data.pop("email")
+                data.pop("total_following")
+        return data
 
     def get_total_followers(self, instance: CustomUser):
         return instance.followers.all().count()
@@ -362,3 +396,8 @@ class UserFullProfileSerializer(serializers.ModelSerializer):
             "profile",
 
         )
+    
+class UpdatePrivacySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ("privacy",)

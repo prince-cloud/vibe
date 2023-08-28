@@ -363,3 +363,31 @@ class UserFollowshipViewset(ModelViewSet):
         )
         return Response(data=serializer.data)
 
+
+class UpdateUserPrivacyViewset(ModelViewSet):
+    """
+    User Data Privacy
+
+    there are two privacies ```Public``` and ```Private```
+
+    ```Private``` hides user info such as ```first_name```, ```last_name```, ```email```, ```total_following```
+
+    """
+    queryset = CustomUser.objects.all()
+    serializer_class = serializers.UpdatePrivacySerializer
+    http_method_names = [
+        "patch",
+    ]
+    permission_classes = [
+        rest_permissions.IsAuthenticated,
+    ]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        if not self.request.user.is_authenticated:
+            return queryset.none()
+        return queryset.filter(id=self.request.user.id)
+
+    def perform_create(self, serializer):
+        return serializer(user=self.request.user)
+

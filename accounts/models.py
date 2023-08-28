@@ -25,6 +25,10 @@ class CustomUser(AbstractUser):
     class TokenReason(models.TextChoices):
         EMAILVERIFICATION = "EmailVerification"
 
+    class UserPrivacy(models.TextChoices):
+            private = "Private"
+            public = "Public"
+            
     phone_number = models.CharField(
         max_length=14,
         unique=True,
@@ -40,6 +44,11 @@ class CustomUser(AbstractUser):
         max_length=100,
         blank=True,
     )
+        
+    privacy = models.CharField(
+        choices=UserPrivacy.choices, max_length=20, default=UserPrivacy.public
+    )
+
     REQUIRED_FIELDS = ["password"]
 
 
