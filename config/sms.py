@@ -1,7 +1,7 @@
 import requests
 from django.conf import settings
 
-def parse_number(number):
+def parse_number(number: str):
     if len(number) > 10:
         if number.startswith("+2330"):
             number = number.replace("+2330", "0", 1)
