@@ -14,6 +14,14 @@ DEBUG = True
 # https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
 ALLOWED_HOSTS = ["*"]
 
+
+"""List of allowed orgins that can access the api endpionts"""
+# CORS_ALLOWED_ORIGINS = []
+
+"""allow all origin for developments"""
+#should be commented out in production and origin list should be given
+CORS_ALLOW_ALL_ORIGINS =True
+
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -25,6 +33,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.sites",
     # Third-party
+    "corsheaders",#allows  allowed front-end framworks to access api endpionts
     "allauth",
     "allauth.account",
     "crispy_forms",
@@ -44,6 +53,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
