@@ -32,6 +32,8 @@ INSTALLED_APPS = [
     "whitenoise.runserver_nostatic",
     "django.contrib.staticfiles",
     "django.contrib.sites",
+    #restframwork
+    "rest_framework",
     # Third-party
     "corsheaders",#allows  allowed front-end framworks to access api endpionts
     "allauth",
