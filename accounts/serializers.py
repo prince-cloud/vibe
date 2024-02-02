@@ -70,7 +70,10 @@ class UserAccountSerializer(serializers.ModelSerializer):
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer, UserAccountSerializer):
     """
-    An endpoint for login
+    Login
+
+    login can be done with ```username```, ```phone number``` and ```email``` in combination with password.
+    both username, phone_number and email are all unique.
     """
     def validate(self, attrs):
         username = attrs.get("username")
